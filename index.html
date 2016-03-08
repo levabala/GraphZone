@@ -22,6 +22,20 @@
             background-color: white;
             cursor: pointer;             
         }
+        contextMenu{
+            position:absolute;
+            background-color: #E6E6E6;
+            border: solid black 1px;
+            width: 100px;
+        }
+        .menuElem{
+            position: relative;
+            border-top: solid lightgray 1px;
+            border-bottom: solid lightgray 1px;                               
+        }
+        .menuElem:hover{
+            background-color: lightgray            
+        }
     </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
     <script src='Additions/vector.js'></script>
@@ -29,11 +43,13 @@
 <body>
     <canvas id='canvas'>Canvas isn't supported</canvas>    
     <div id='children'></div>
+    <!--
     <input style='position: absolute' value='Create Module' type='button' onclick='newModule()' tabindex="1">
     <br>
     <input style='position: absolute' type='text' placeholder="type of module" id='type' tabindex="2">
     <br>
     <input style='position: absolute' type='text' placeholder="params" id='params'  tabindex="3">    
+    -->
     <script>
     var can = document.getElementById('canvas');
     can.width = document.documentElement.clientWidth - 30;
@@ -41,23 +57,40 @@
     window.addEventListener('resize', function(){
         can.width = document.documentElement.clientWidth - 30;
         can.height = document.documentElement.clientHeight - 30;        
-    });      
+    });
+          
+    /*
     $('#type')[0].onkeypress = function(e){
         if (e.which == 13) newModule();
     }
     $('#params')[0].onkeypress = function(e){
         if (e.which == 13) newModule();
     }
+    */
+    //!Not used
     function newModule(){
+        var min = -10;
+        var max = 10;
+        var dx = Math.random() * (max - min) + min;
+        var dy = Math.random() * (max - min) + min;                                
         engine.createModule(
             $("#type")[0].value,
-            new Pos($("#canvas")[0].width/2,
-            $("#canvas")[0].height/2),
+            new Pos($("#canvas")[0].width/2+dx,
+            $("#canvas")[0].height/2+dy),
             $("#params")[0].value);        
         $('#params')[0].value = '';
     }        
     </script>
-    <script src='classes.js'></script>
+    <script src="Additions/Vector.js"></script>
+    <script src="Additions/CircularCheck.js"></script>
+    <script src="LittleClasses/Pos.js"></script>    
+    <script src="LittleClasses/Connection.js"></script>
+    <script src='MainClasses/Sum.js'></script>
+    <script src='MainClasses/Mussya.js'></script>
+    <script src='MainClasses/Data.js'></script>
+    <script src='MainClasses/Action.js'></script>
+    <script src='MainClasses/Plus.js'></script>
+    <script src="MainClasses/Engine.js"></script>
     <script src='main.js'></script>
 </body>
 </html>

@@ -7,9 +7,19 @@ var div = $('#children')[0];
 var engine = new Engine(can,div);
 
 //tested modules
-engine.createModule('Num', new Pos(20,200), [10]);
-engine.createModule('Num', new Pos(50,60), [15]);
-engine.createModule('Plus', new Pos(400,90));
+var d1 = engine.createModule('Data', new Pos(150,200), {value:10});
+var d2 = engine.createModule('Data', new Pos(150,100), {value:15});
+engine.createModule('Data', new Pos(550,150), {value:0});
+var plusWithNums = engine.createModule('Plus', new Pos(400,150));
+engine.createModule('Data', new Pos(350,500), {value:'Hello '});
+engine.createModule('Data', new Pos(350,400), {value:'Lev!'});
+var output = engine.createModule('Data', new Pos(650,450), {value:'For result'});
+var plus = engine.createModule('Plus', new Pos(500,450));
+engine.connections.push({
+    from: plus,
+    to: output
+})  
+plus.outputs.push(output)
 
 //update main canvas
 engine.updateCtx();
