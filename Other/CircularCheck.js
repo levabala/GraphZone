@@ -1,4 +1,3 @@
-//странная функция, {value:10} считает за циклическую
 function isCyclic (obj) {
   var seenObjects = [];
   var mark = String(Math.random());

@@ -1,3 +1,4 @@
+//my old class :)
 function Vector(start, end, angle, length, eq){
     //basic properties
     this.type = 'vector';
