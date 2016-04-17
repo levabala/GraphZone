@@ -1,221 +1,173 @@
-function Presenter(can,div){
-    var ctx = can.getContext('2d');
-    var createCount = 0;
-    var elements = {};
-    var connections = {};
-    var activeId = null;
-    var presenter = this;
-    var offsetX = can.offsetLeft;
-    var offsetY = can.offsetTop;
-    var mousePos = {};
-    var Modules = {
-        'Data': Data,
-        'Sum': Sum,
-        'Graphic': Graphic,
-        'DataList': DataList,
-        'Container': Container,
-        'Worker': WorkerM
-    }
-    var ParamsNeed = [
-        'Data',
-        'Graphic',
-        'Worker'        
-    ]
-    
-    this.getElem = function(id){
-        return elements[id];
-    }
-    
-    this.createModule = function(pos,type,data){                 
-        if (Modules[type] == null) return;              
-        var module = new Modules[type](pos,createCount,data,initConnection);
-        elements[createCount] = module;        
-        div.appendChild(module.dom);
-        createCount++;
-        
-        return createCount-1;                 
-    }
-    
-    this.createConnection = function(id1,id2){
-        if (elements[id1] == null || elements[id2] == null) return; //checking for existing
-        if (connections[id1] == null) connections[id1] = [];      
-        if ((connections[id1].indexOf(id2) != -1) || (connections[id2] != null && connections[id2].indexOf(id1) != -1)) return;        
-        connections[id1].push(id2);
-        console.log('from',id1,'to',id2);        
-        elements[id1].outputs.push(elements[id2]);
-        elements[id2].inputs.push(elements[id1]);        
-        if (elements[id2].Process != null) elements[id2].Process();
-        if (elements[id1].Share != null) elements[id1].Share();
-        activeId = null;        
-        deleteEvents();        
-    }
-    
-    function cancelConnection(){
-        activeId = null;
-        deleteEvents();
-    }
-    
-    function initConnection(id){              
-        if (activeId != null) return;        
-        activeId = id;        
-        hangEvents();
-    }   
-    
-    function finishConnection(e){   
-        console.log('finishing',e.target)   
-        var id = e.target.moduleId; 
-        if (typeof id == 'undefined'){
-            console.log('checking...')
-            var node = e.target;
-            var name = node.tagName;                        
-            while(name != 'ELDOM'){
-                node = node.parentNode;
-                name = node.tagName;                
-                if (name == null) {                    
-                    return;
-                }
+function Presenter(field, workplacesList) {
+    var workplaces = [];
+    var mainWP = {};
+    var wpList = [];
+    var createC = 0;
+    var ParamsNeed = ['Data'];
+
+    var pres = this;
+
+    var wpl = $("#wpl");
+    var mainW = $("#mainworkplace");
+
+    this.createWP = function(toMain) {
+        var wp = new Workplace(createC, $('#mainworkplace'), field[0]);
+        wp.dom.className = 'workplace';
+        if (toMain) changeMainWP(wp);
+        addWPToList(wp);
+        workplaces.push(wp);
+        createC++;
+        return wp;
+    };
+
+    this.updateView = function() {
+        //resizing              
+        var mwp = $('#mainworkplace');
+        var bordersW = parseFloat(getComputedStyle(mwp[0], null).getPropertyValue('border-left-width').replace('px', '')) + parseFloat(getComputedStyle(mwp[0], null).getPropertyValue('border-right-width').replace('px', ''));
+        mainWP.dom.style.height = field.height() + 'px';
+        mainWP.dom.style.width = wpl[0].offsetLeft - mainW[0].offsetLeft - field.width() * 0.03 - 10 - bordersW + 'px';
+        mainWP.dom.getElementsByTagName('canvas')[0].style.height = mwp.height() + 'px';
+        mainWP.dom.getElementsByTagName('canvas')[0].style.width = mwp.width() + 'px';
+        wpl[0].style.height = mainWP.dom.offsetHeight + 'px';
+        workplacesList[0].style.height = wpl.height() - workplacesList[0].offsetTop + wpl[0].offsetTop + 'px';//mainW.height() - workplacesList[0].offsetTop + wpl[0].offsetTop + 'px';              
+        workplacesList[0].realWidth = workplacesList.width() - getScrollbarWidth();
+        mainWP.render();
+
+        fitImges();
+    };
+
+    this.refreshImges = function() {
+        for (var w in workplaces) workplaces[w].settingImage();
+        setTimeout(function() {
+            for (var l in wpList) {
+                var wp = wpList[l];
+                document.getElementById(wp.id).src = wp.view.src;
             }
-            id = node.moduleId;            
-        }                  
-        presenter.createConnection(activeId,id);                
-    }
-    
-    function posToCenter(elem,pos){
-        var pp = {};
-        pp.x = pos.x + (elem.offsetWidth || fromPxToNumber(elem.style.width))/3;
-        pp.y = pos.y + (elem.offsetHeight || fromPxToNumber(elem.style.height))/3;
-        return pp;        
-    }
-     
-    function renderConnections(){
-        ctx.clearRect(0, 0, can.width, can.height);                
-        ctx.strokeStyle = 'darkgreen';
-        var V;
-        var VMain;
-        for (var id1 in connections){            
-            for (var i in connections[id1]){                
-                var id2 = connections[id1][i];    
-                var dom1 = elements[id1].dom;
-                var dom2 = elements[id2].dom;                                            
-                var pos1 = posToCenter(dom1,dom1.pos);
-                var pos2 = posToCenter(dom2,dom2.pos);
-                connV = new Vector(pos1,pos2);     
-                connVMain = new Vector(pos1,null,connV.angle,connV.length/2);                                                                
-                ctx.beginPath();
-                ctx.lineWidth = 2;
-                ctx.moveTo(pos1.x,pos1.y);
-                ctx.lineTo(pos2.x,pos2.y);
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.lineWidth = 4;                   
-                ctx.moveTo(pos1.x, pos1.y);                
-                ctx.lineTo(connVMain.end.x,connVMain.end.y);
-                ctx.stroke();  
-            }
+        });
+    };
+
+    var refreshImgesInterval = setInterval(this.refreshImges, 5000);
+    window.addEventListener('resize', pres.updateView);
+    window.addEventListener('focus', pres.updateView);
+
+
+    function changeMainWP(wp) {
+        if (typeof mainWP.dom !== 'undefined') {
+            field[0].removeChild(document.getElementById('mainworkplace'));
+            mainWP.dom.className = 'workplace';
+            mainWP.dom.id = mainWP.id;
+            clearInterval(mainWP.updateInterval);
         }
-        if (activeId != null){
-            var pos1 = posToCenter(elements[activeId].dom,elements[activeId].dom.pos);
-            connV = new Vector(pos1,mousePos);     
-            connVMain = new Vector(pos1,null,connV.angle,connV.length/2);            
-            ctx.beginPath();
-            ctx.lineWidth = 2;
-            ctx.moveTo(pos1.x,pos1.y);
-            ctx.lineTo(mousePos.x,mousePos.y);
-            ctx.stroke();
-            
-            ctx.beginPath();
-            ctx.lineWidth = 4;                   
-            ctx.moveTo(pos1.x, pos1.y);                
-            ctx.lineTo(connVMain.end.x,connVMain.end.y);
-            ctx.stroke(); 
+        else field[0].removeChild(document.getElementById('mainworkplace'));
+        wp.dom.className = 'mainworkplace';
+        wp.dom.id = 'mainworkplace';
+        wp.updateInterval = setInterval(wp.render, 2000);
+        mainWP = wp;
+        mainWP.render();
+        field[0].appendChild(mainWP.dom);
+        mainWP.render();
+    }
+
+    var timeout;
+    function addWPToList(wp) {
+        if (typeof wp.view === 'undefined') {
+            clearTimeout(timeout);
+            timeout = setTimeout(function() { addWPToList(wp); }, 100);
+            return;
+        }
+        var view = wp.view;
+        wpList.push(wp);
+        var size = scaleSize(workplacesList[0].realWidth, view.height, view.width, view.height);
+        view.width = size[0];
+        view.height = size[1];
+        workplacesList[0].appendChild(wp.view);
+        wp.render();
+    }
+
+    function removeWPFromList(wp) {
+
+    }
+
+    function fitImges() {
+        var w = workplacesList[0].realWidth;
+        var imges = workplacesList[0].getElementsByTagName('img');
+        for (var i = 0; i < imges.length; i++) {
+            var img = imges[i];
+            var lW = workplaces[img.id].size.width / w;
+            img.width = w;
+            img.height = workplaces[img.id].size.height / lW;
         }
     }
-    
-    function hangEvents(){
-        for (var e in elements){
-            if (e == activeId) continue;
-            var el = elements[e];            
-            el.dom.addEventListener('click',finishConnection);
-            for (var c in el.children){
-                var elc = el.children[c];
-                console.log(elc)           
-                elc.dom.onclick = el.dom.onclick;
-            }
-        }
-    }
-    
-    function deleteEvents(){
-        for (var e in elements){
-            var el = elements[e];
-            el.dom.removeEventListener('click',finishConnection);
-            for (var c in el.children){                
-                var elc = el.children[c];                            
-                elc.dom.onclick = null;
-            }
-        }
-    }
-    
-    document.addEventListener('mousemove', function(e){
+
+    document.addEventListener('mousemove', function(e) {
         mousePos = {
-            x: e.pageX - offsetX,
-            y: e.pageY - offsetY,
-        }
+            x: e.pageX - mainWP.dom.offsetLeft,
+            y: e.pageY - mainWP.dom.offsetTop,
+        };
     });
-    
-    document.oncontextmenu = function(e) {        
-        if (activeId != null) {
-            cancelConnection();
-            return false;
-        }
-        var menu        
-        if ($('#contextmenu')[0] == null) {
+
+    document.oncontextmenu = function(e) {
+        var menu;
+        if (typeof $('#contextmenu')[0] === 'undefined') {
             menu = document.createElement('contextMenu');
             menu.id = 'contextmenu';
-            menu.style.textAlign = 'center';                        
-            for (var m in Modules){                
+            menu.style.textAlign = 'center';
+            for (var m in mainWP.Modules) {
                 var elem = document.createElement('div');
                 elem.className = 'menuElem';
-                elem.innerHTML = m;             
-                elem.moduleName = m;           
-                elem.onclick = function(e){
-                    var params;                                        
-                    if (ParamsNeed.indexOf(this.moduleName) != -1){
-                        if (this.moduleName == 'Worker'){
-                            var str = prompt("Enter worker name(without .js):");
-                            presenter.createModule({x:e.pageX,y:e.pageY},this.moduleName,new Worker(str+'.js'));
-                            return;
+                elem.innerHTML = m;
+                elem.moduleName = m;
+                elem.onclick = function(e) {
+                    var params;
+                    if (ParamsNeed.indexOf(this.moduleName) != -1) {
+                        var sucf = false;
+                        while (sucf === false) {
+                            params = prompt("Enter params(separated by comma):");
+                            if (params === null) return;
+                            try {
+                                params = JSON.parse(params);
+                                sucf = true;
+                            }
+                            catch (err) {
+                                alert('Invalid params!', err);
+                                sucf = false;
+                            }
                         }
-                        params = prompt("Enter params(separated by comma):");   
-                        try{                            
-                            params = JSON.parse(params);                            
-                        }                     
-                        catch(e){
-                            try{
-                                params = JSON.parse('['+params+']');
-                            }
-                            catch(e){
-                                alert('Bad params');                                
-                                return;
-                            }
-                        }        
-                        if (params.length == 1) params = params[0];                                            
                     }
-                    presenter.createModule({x:e.pageX,y:e.pageY},this.moduleName,params);
-                }
-                menu.appendChild(elem);                                
+                    console.log({ x: e.pageX, y: e.pageY }, this.moduleName, params)
+                    mainWP.createModule({ x: e.pageX, y: e.pageY }, this.moduleName, params);
+                };
+                menu.appendChild(elem);
             }
             document.body.appendChild(menu);
         }
         else menu = $('#contextmenu')[0];
         menu.style.top = e.pageY + 'px';
-        menu.style.left = e.pageX + 'px';        
-        menu.style.visibility = 'visible';                
+        menu.style.left = e.pageX + 'px';
+        menu.style.visibility = 'visible';
         return false;
-    }    
-    window.addEventListener('click', function(){
+    };
+    window.addEventListener('click', function() {
         if ($('#contextmenu')[0]) $('#contextmenu')[0].style.visibility = 'hidden';
     });
-    
-    setInterval(renderConnections,16);
+}
+
+
+function scaleSize(maxW, maxH, currW, currH) {
+    var ratio = currH / currW;
+    if (currW >= maxW && ratio <= 1) {
+        currW = maxW;
+        currH = currW * ratio;
+    }
+    else if (currH >= maxH) {
+        currH = maxH;
+        currW = currH / ratio;
+    }
+
+    return [currW, currH];
+}
+
+function getPNG(elem) {
+    if (!elem.toDataURL) return;
+    return elem.toDataURL('image/png');
 }

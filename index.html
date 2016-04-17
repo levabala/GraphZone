@@ -1,21 +1,53 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
 
 <head>
-    <meta charset="utf-8" />
-    <title>Index.html</title>
-    <style>        
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>GraphsZone4.0</title>
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.0.min.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src='Other/interact.js'></script>
+    <script src='Other/domToImage.js'></script>
+    <script src='Other/fileSaver.js'></script>
+    <script src='Other/LittleFunctions.js'></script>
+    <script src='Classes/Module.js'></script>
+    <script src='Classes/GraphLib.js'></script>
+    <script src='Modules/Data.js'></script>
+    <script src='Modules/Action.js'></script>
+    <script src='Modules/Graphic.js'></script>
+    <script src='Modules/OneDWorker.js'></script>
+    <style>
+        .dropZone {
+            border: dotted lightblue 3px;
+            text-align: center;
+            padding: 35px;
+            margin: 5px;
+        }
+        
+        .axis path {
+            fill: none;
+            stroke: #777;
+            shape-rendering: crispEdges;
+        }
+        
+        .axis text {
+            font-family: Lato;
+            font-size: 13px;
+        }
+        
         contextMenu {
             position: absolute;
             background-color: #E6E6E6;
             border: solid black 1px;
-            width: 100px;
+            width: 120px;
         }
         
         .menuElem {
             position: relative;
             border-top: solid lightgray 1px;
             border-bottom: solid lightgray 1px;
+            padding: 4px;
+            font-size: 20px;
         }
         
         .menuElem:hover {
@@ -31,60 +63,144 @@
             color: black;
             position: absolute;
             background-color: white;
-            -webkit-user-select: 'none';
-            -moz-user-select: 'none';
-            -ms-user-select: 'none';
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
         
-        .moduleNotResiable {
-            border: solid lightgray 1px;
-            border-width: 2px 2px 2px 2px;
-            box-sizing: border-box;
-            padding: 10px;
-            font: 20px Arial;
-            color: black;
+        .field {
+            border: solid black 1px;
             position: absolute;
-            cursor: default;
-            background-color: white;
-            -webkit-user-select: 'none';
-            -moz-user-select: 'none';
-            -ms-user-select: 'none';
+            margin: 0 auto;
+            left: 0px;
+            top: 0px;
+            right: 0px;
+            bottom: 0px;
+            padding: 20px;
         }
         
-        .dropZone {
-            border: dotted lightblue 3px;
-            text-align: center;
-            padding: 35px;
-            margin: 5px;                         
+        .mainworkplace {
+            border: solid green 2px;
+            padding: 0px;
+            float: left;
         }
+        
+        .workplaceList {
+            padding-left: 10px;
+            padding-right: 10px;
+            margin-top: 5px;
+            overflow-y: scroll;
+        }
+        
+        .wpl {
+            border: dashed blue 1px;
+            padding: 0px;
+            float: right;
+            width: 15%;
+        }
+        
+        canvas {
+            margin: 0px;
+        }
+        
+        img {
+            border: solid black 1px;
+        }
+        
+        .children {
+            float: left;                                                       
+        }
+        
+        .title {
+            margin-right: 10px;
+            padding: 5px;
+            padding-left: 10px;
+            padding-right: 10px;
+            border: solid black 1px;
+        }
+        
+        .view {
+            float: right;
+        }
+        
+        div.button {            
+            position: absolute;
+            color: #fff;            
+            text-decoration: none;            
+            user-select: none;            
+            background: rgb(212, 75, 56);            
+            padding: .7em 0.6em;            
+            outline: none;
+            float: right;       
+            font-family: "Comic Sans MS", cursive, sans-serif;
+            font-size: 16px;
+            right: 10px                
+        }
+        
+        div.button:hover {
+            background: rgb(232, 95, 76);
+        }        
+        
+        div.button:active {
+            background: rgb(152, 15, 0);
+        }        
     </style>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
-    <script src='Other/Pos.js'></script>
-    <script src='Other/Vector.js'></script>
-    <script src='Other/CircularCheck.js'></script>
-    <script src='Other/GenerateTitle.js'></script>
-    <script src='Other/interact.js'></script>
-    <script src='Other/bigint.js'></script>
-    <script src='Other/GraphLib2.js'></script>
-    <script src='Other/OtherOther.js'></script>
+    <script src='Classes/WorkPlace.js'></script>
+    <script src='Classes/Presenter.js'></script>
 </head>
 
 <body>
-    <canvas id='canvas'>Canvas isn't supported</canvas>
-    <div id='elements'></div>
+    <div class="field" id='field'>
+        <div class='mainworkplace' id='mainworkplace'>
+            <canvas id='maincanvas'>
+                <canvas>
+        </div>
+        <div class='wpl' id='wpl'>
+            <button style='position:relative;width:100%;padding:10px' onclick="presenter.createWP(true)">Add WP</button>
+            <br>
+            <div class='workplaceList' id='workplaceList'></div>
+        </div>
+    </div>
     <script>
-        var can = document.getElementById('canvas');
-    can.width = document.documentElement.clientWidth - 30;
-    can.height = document.documentElement.clientHeight - 30;    
-    window.addEventListener('resize', function(){
-        can.width = document.documentElement.clientWidth - 30;
-        can.height = document.documentElement.clientHeight - 30;        
-    });        
-    if(typeof(Storage) === "undefined") {
-        alert('We can\'t save state of the programm because your browser not support localStorage');
-    }
-    </script>
+        //prepare script
+        var field = $("#field");
+        var wpl = $("#wpl");        
+        var mainW = $("#mainworkplace");
+        var mainWL = $("#workplaceList");
+        var mainC = mainW[0].getElementsByTagName('canvas')[0];
+        mainW[0].style.height = field.height() + 'px';                         
+        mainW[0].style.width = wpl[0].offsetLeft - mainW[0].offsetLeft - field.width() * 0.02 + 'px';         
+        mainC.height = 10//mainW.height();
+        mainC.width = 20//mainW.width();          
+        mainWL[0].style.height = mainW.height() - mainWL[0].offsetTop + wpl[0].offsetTop + 'px';      
+        mainWL[0].realWidth = mainWL.width() - getScrollbarWidth();
+        
+        function getScrollbarWidth() {
+            var outer = document.createElement("div");
+            outer.style.visibility = "hidden";
+            outer.style.width = "100px";
+            outer.style.msOverflowStyle = "scrollbar"; // needed for WinJS apps
 
+            document.body.appendChild(outer);
+
+            var widthNoScroll = outer.offsetWidth;
+            // force scrollbars
+            outer.style.overflow = "scroll";
+
+            // add innerdiv
+            var inner = document.createElement("div");
+            inner.style.width = "100%";
+            outer.appendChild(inner);        
+
+            var widthWithScroll = inner.offsetWidth;
+
+            // remove divs
+            outer.parentNode.removeChild(outer);
+
+            return widthNoScroll - widthWithScroll;
+        }
+    </script>
+    <script src='main.js'></script>
     <script>
         //elements resizing script
         interact('ELDOM')
@@ -95,50 +211,9 @@
                 preserveAspectRatio: false,
                 edges: { left: true, right: true, bottom: true, top: true },                                
             })
-            .on('resizemove', function (event) {                
-                if (event.target.resizable == false) return;                                
-                var target = event.target,
-                    x = (parseFloat(target.getAttribute('data-x')) || 0),
-                    y = (parseFloat(target.getAttribute('data-y')) || 0);
-                
-                for (var c = 0; c < target.childNodes.length; c++){
-                    var node = target.childNodes[c];
-                    if (!node.checkMinSize) continue;                                   
-                    var resE = node.checkMinSize(event.rect.width,event.rect.height);
-                    if (!resE[0]) {
-                        event.rect.width = target.style.width;
-                        event.deltaRect.left = 0;
-                    }
-                    if (!resE[1]) {
-                        event.rect.height = target.style.height;
-                        event.deltaRect.top = 0;
-                    }                 
-                }
-                
-                // update the element's style                
-                target.style.width  = event.rect.width + 'px';
-                target.style.height = event.rect.height  + 'px';
-
-                // translate when resizing from top or left edges
-                var lastX = x;
-                var lastY = y;
-                x += event.deltaRect.left;
-                y += event.deltaRect.top;
-
-                target.style.webkitTransform = target.style.transform =
-                    'translate(' + x + 'px,' + y + 'px)';
-
-                target.setAttribute('data-x', x);
-                target.setAttribute('data-y', y);
-                
-                for (var c = 0; c < target.childNodes.length; c++){
-                    var node = target.childNodes[c];                                                 
-                                              
-                    if (node.resizeEvent) {                                                                        
-                        node.resizeEvent();
-                    }
-                    //else console.log(node,node.resizable)
-                }                   
+            .on('resizemove', function (event) {                                
+                if (event.target.resizable == false) return;                                                
+                event.target.resizeEvent(event);
             });
             
         function dragMoveListener(event) {
@@ -156,24 +231,15 @@
             target.setAttribute('data-x', x);
             target.setAttribute('data-y', y);
             
-            target.pos = new Pos(target.startPos.x+x,target.startPos.y+y);
+            target.pos = new Pos(target.startPos.x+x,target.startPos.y+y);            
+            if (target.moving === false) target.moveStart = new Pos(x,y);                        
+            target.moving = true;            
+            target.focusMe(target.moduleId);           
         }
 
         // this is used later in the resizing and gesture demos
         window.dragMoveListener = dragMoveListener;
     </script>
-    <!--   
-    <script src='Modules/Actions/Math.js'></script>    -->
-    <script src='Modules/Action.js'></script>
-    <script src='Modules/Worker.js'></script>
-    <script src='Modules/Sum.js'></script>
-    <script src='Modules/Data.js'></script>
-    <script src='Modules/Graphic.js'></script>
-    <script src='Modules/DataList.js'></script>
-    <script src='Modules/Container.js'></script>
-    <script src='Classes/Presenter.js'></script>
-    <script src='Classes/Module.js'></script>
-    <script src='main.js'></script>
 </body>
 
 </html>

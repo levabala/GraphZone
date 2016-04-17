@@ -1,0 +1,139 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>GraphsZone4.0</title>
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.0.min.js"></script>
+    <style>
+        .field {
+            border: solid black 1px;
+            position: absolute;
+            margin: 0 auto;
+            left: 0px;
+            top: 0px;
+            right: 0px;
+            bottom: 0px;
+            padding: 20px;
+        }
+        
+        .workplace {
+            position: relative;
+            float: left;
+            text-align: center;
+            border: solid gray 2px;
+            border-bottom: solid gray 3px;
+            border-right: solid gray 3px;
+            padding: 0px;
+            margin-top: 10px
+        }
+        
+        .mainworkplace {
+            position: relative;
+            float: left;
+            text-align: center;
+            border: solid gray 2px;
+            border-bottom: solid gray 3px;
+            border-right: solid gray 3px;
+            margin-right: 10px;            
+            padding: 0px;
+            width: 80%;
+            overflow: hidden;
+        }
+        
+        .workplaceList {
+            position: relative;
+            float: left;                                                                       
+            margin-top: 5px;            
+            border-top: solid darkblue 1px;
+            border-bottom: solid darkblue 1px;
+            background-color: #FAFAFA;
+            padding-left: 10px;
+            padding-right: 5px;                     
+            overflow-y: scroll;
+            overflow-x: scroll;            
+        }
+        
+        .wpl {
+            position: relative;
+            float: right;                        
+            width: 15%;            
+        }        
+        
+        canvas {
+            border: solid black 1px;
+            margin: 0px;
+        }               
+    </style>
+    <script src='Classes/WorkPlace.js'></script>
+    <script src='Classes/Presenter.js'></script>
+</head>
+
+<body>
+    <div class="field">
+        <div class="mainworkplace" id="mainWorkplace">
+            <canvas></canvas>
+        </div>                
+        <div class='wpl'>
+            <button style='position:relative;width:100%;padding:10px' onclick="presenter.createWP()">Add WP</button>
+            <br>            
+            <div class="workplaceList" id="workplaces">                
+            </div>           
+        </div>     
+    </div>
+    <script>
+        //prepare script
+        resize();
+        function resize(){
+            var mainWP = $('.mainworkplace');            
+            var listWP =  $('#workplaces');
+            var field =  $('.field');
+            var wpl = $('.wpl');
+            var canvases = $('canvas');                                                              
+            mainWP[0].style.width = wpl[0].offsetLeft - mainWP[0].offsetLeft - 20 + 'px';
+            mainWP[0].style.height = field.height() + 'px';            
+            wpl[0].style.height = mainWP.height() + 'px';//mainWP[0].offsetHeight - mainWP[0].offsetTop + 'px';
+            listWP[0].style.width = wpl.width() - getScrollbarWidth() + 'px';
+            listWP[0].style.height = wpl.height() - listWP[0].offsetTop + 'px';                                                                       
+            listWP[0].realWidth = listWP.width() - getScrollbarWidth();
+            console.log(mainWP[0].style.height)                        
+            var canvas = mainWP[0].getElementsByTagName('canvas')[0];
+            canvas.width = mainWP.width();
+            canvas.height = mainWP.height();                                                           
+        }
+        
+        function getScrollbarWidth() {
+            var outer = document.createElement("div");
+            outer.style.visibility = "hidden";
+            outer.style.width = "100px";
+            outer.style.msOverflowStyle = "scrollbar"; // needed for WinJS apps
+
+            document.body.appendChild(outer);
+
+            var widthNoScroll = outer.offsetWidth;
+            // force scrollbars
+            outer.style.overflow = "scroll";
+
+            // add innerdiv
+            var inner = document.createElement("div");
+            inner.style.width = "100%";
+            outer.appendChild(inner);        
+
+            var widthWithScroll = inner.offsetWidth;
+
+            // remove divs
+            outer.parentNode.removeChild(outer);
+
+            return widthNoScroll - widthWithScroll;
+        }
+    </script>
+    <script src='main.js'></script>
+    <script>
+        //resize script
+        window.onresize = function(){resize();presenter.updateView();};
+        resize();
+        presenter.updateView();                        
+    </script>    
+</body>
+
+</html>
