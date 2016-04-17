@@ -1,3 +1,0 @@
-function DOM(pos,module){
-    
-}

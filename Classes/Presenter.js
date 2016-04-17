@@ -7,22 +7,33 @@ function Presenter(can,div){
     var presenter = this;
     var offsetX = can.offsetLeft;
     var offsetY = can.offsetTop;
+    var mousePos = {};
     var Modules = {
         'Data': Data,
-        'Sum': Sum
+        'Sum': Sum,
+        'Graphic': Graphic,
+        'DataList': DataList,
+        'Container': Container,
+        'Worker': WorkerM
     }
     var ParamsNeed = [
-        'Data'
+        'Data',
+        'Graphic',
+        'Worker'        
     ]
     
-    this.createModule = function(pos,type,params){
-        if (Modules[type] == null) return;       
-        var module = new Modules[type](pos,createCount,params,initConnection);
-        elements[createCount] = module;
-        div.appendChild(module.dom);            
+    this.getElem = function(id){
+        return elements[id];
+    }
+    
+    this.createModule = function(pos,type,data){                 
+        if (Modules[type] == null) return;              
+        var module = new Modules[type](pos,createCount,data,initConnection);
+        elements[createCount] = module;        
+        div.appendChild(module.dom);
         createCount++;
         
-        return createCount-1;
+        return createCount-1;                 
     }
     
     this.createConnection = function(id1,id2){
@@ -46,12 +57,34 @@ function Presenter(can,div){
     
     function initConnection(id){              
         if (activeId != null) return;        
-        activeId = id;
+        activeId = id;        
         hangEvents();
     }   
     
-    function finishConnection(e){                        
-        presenter.createConnection(activeId,e.target.moduleId);                
+    function finishConnection(e){   
+        console.log('finishing',e.target)   
+        var id = e.target.moduleId; 
+        if (typeof id == 'undefined'){
+            console.log('checking...')
+            var node = e.target;
+            var name = node.tagName;                        
+            while(name != 'ELDOM'){
+                node = node.parentNode;
+                name = node.tagName;                
+                if (name == null) {                    
+                    return;
+                }
+            }
+            id = node.moduleId;            
+        }                  
+        presenter.createConnection(activeId,id);                
+    }
+    
+    function posToCenter(elem,pos){
+        var pp = {};
+        pp.x = pos.x + (elem.offsetWidth || fromPxToNumber(elem.style.width))/3;
+        pp.y = pos.y + (elem.offsetHeight || fromPxToNumber(elem.style.height))/3;
+        return pp;        
     }
      
     function renderConnections(){
@@ -61,9 +94,11 @@ function Presenter(can,div){
         var VMain;
         for (var id1 in connections){            
             for (var i in connections[id1]){                
-                var id2 = connections[id1][i];                                                
-                var pos1 = elements[id1].dom.pos;
-                var pos2 = elements[id2].dom.pos;
+                var id2 = connections[id1][i];    
+                var dom1 = elements[id1].dom;
+                var dom2 = elements[id2].dom;                                            
+                var pos1 = posToCenter(dom1,dom1.pos);
+                var pos2 = posToCenter(dom2,dom2.pos);
                 connV = new Vector(pos1,pos2);     
                 connVMain = new Vector(pos1,null,connV.angle,connV.length/2);                                                                
                 ctx.beginPath();
@@ -80,7 +115,7 @@ function Presenter(can,div){
             }
         }
         if (activeId != null){
-            var pos1 = elements[activeId].dom.pos;
+            var pos1 = posToCenter(elements[activeId].dom,elements[activeId].dom.pos);
             connV = new Vector(pos1,mousePos);     
             connVMain = new Vector(pos1,null,connV.angle,connV.length/2);            
             ctx.beginPath();
@@ -102,6 +137,11 @@ function Presenter(can,div){
             if (e == activeId) continue;
             var el = elements[e];            
             el.dom.addEventListener('click',finishConnection);
+            for (var c in el.children){
+                var elc = el.children[c];
+                console.log(elc)           
+                elc.dom.onclick = el.dom.onclick;
+            }
         }
     }
     
@@ -109,6 +149,10 @@ function Presenter(can,div){
         for (var e in elements){
             var el = elements[e];
             el.dom.removeEventListener('click',finishConnection);
+            for (var c in el.children){                
+                var elc = el.children[c];                            
+                elc.dom.onclick = null;
+            }
         }
     }
     
@@ -129,16 +173,32 @@ function Presenter(can,div){
             menu = document.createElement('contextMenu');
             menu.id = 'contextmenu';
             menu.style.textAlign = 'center';                        
-            for (var m in Modules){
+            for (var m in Modules){                
                 var elem = document.createElement('div');
                 elem.className = 'menuElem';
-                elem.innerText = m;             
+                elem.innerHTML = m;             
                 elem.moduleName = m;           
                 elem.onclick = function(e){
                     var params;                                        
                     if (ParamsNeed.indexOf(this.moduleName) != -1){
-                        params = prompt("Enter params(separated by comma):");                        
-                        params = JSON.parse('['+params+']');        
+                        if (this.moduleName == 'Worker'){
+                            var str = prompt("Enter worker name(without .js):");
+                            presenter.createModule({x:e.pageX,y:e.pageY},this.moduleName,new Worker(str+'.js'));
+                            return;
+                        }
+                        params = prompt("Enter params(separated by comma):");   
+                        try{                            
+                            params = JSON.parse(params);                            
+                        }                     
+                        catch(e){
+                            try{
+                                params = JSON.parse('['+params+']');
+                            }
+                            catch(e){
+                                alert('Bad params');                                
+                                return;
+                            }
+                        }        
                         if (params.length == 1) params = params[0];                                            
                     }
                     presenter.createModule({x:e.pageX,y:e.pageY},this.moduleName,params);

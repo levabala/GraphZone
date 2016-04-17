@@ -10,15 +10,13 @@ function Sum(id){
         switch (mainType){
             case 'object': {                                
                 for (var i = 1; i < this.inputs.length;i++){                    
-                    var data = this.inputs[i].data;
-                    console.log(data,'+',res,'=');
+                    var data = this.inputs[i].data;                    
                     var array = res;
                     if (data.length > res.length || Object.keys(data).length > Object.keys(res).length) array = data;
                     for (var f in array){                        
                         if (array[f] == null) continue;
                         res[f] = determineAndCalc(res[f],data[f]);                        
-                    }
-                    console.log(res)
+                    }                    
                 }
                 break;
             }
@@ -41,7 +39,7 @@ function Sum(id){
         var res = null;
         if (typeof var1 != typeof var2) {
             if (var1 == null) return var2;
-            return var1;
+            return var1;    
         }
         switch (typeof var1){
             case 'object': {

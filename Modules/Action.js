@@ -8,7 +8,7 @@ function Action(id){
     this.Share = function(){        
         for (var o in this.outputs){
             console.log('shared to',this.outputs[o].id)
-            this.outputs[o].changeTo(this.result);   
+            this.outputs[o].changeTo(this.result,this.id);                
         }
     }
     this.Process = function(){

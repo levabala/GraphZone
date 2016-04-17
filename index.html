@@ -1,40 +1,61 @@
 <!DOCTYPE html>
 <html>
-<head>    
-    <meta charset="utf-8"/>
-    <title>Index.html</title>    
-    <style>
-        canvas{
+
+<head>
+    <meta charset="utf-8" />
+    <title>Index.html</title>
+    <style>        
+        contextMenu {
             position: absolute;
-            margin-top:10px;
-            margin-left:10px;
-            bottom:10px;
-            right:10px;            
-            border: dotted lightblue 5px;
-            background-color: #FBFDFD
-        }
-        .canvasChild{
-            position: absolute;
-            bottom: auto;
-            right: auto;            
-            border: solid black 1px;
-            font-family: 'Times New Roman', Times, serif;
-            background-color: white;
-            cursor: pointer;             
-        }
-        contextMenu{
-            position:absolute;
             background-color: #E6E6E6;
             border: solid black 1px;
             width: 100px;
         }
-        .menuElem{
+        
+        .menuElem {
             position: relative;
             border-top: solid lightgray 1px;
-            border-bottom: solid lightgray 1px;                               
+            border-bottom: solid lightgray 1px;
         }
-        .menuElem:hover{
-            background-color: lightgray            
+        
+        .menuElem:hover {
+            background-color: lightgray
+        }
+        
+        .module {
+            border: solid lightgray 1px;
+            border-width: 1px 3px 3px 1px;
+            box-sizing: border-box;
+            padding: 10px;
+            font: 20px Arial;
+            color: black;
+            position: absolute;
+            background-color: white;
+            -webkit-user-select: 'none';
+            -moz-user-select: 'none';
+            -ms-user-select: 'none';
+        }
+        
+        .moduleNotResiable {
+            border: solid lightgray 1px;
+            border-width: 2px 2px 2px 2px;
+            box-sizing: border-box;
+            padding: 10px;
+            font: 20px Arial;
+            color: black;
+            position: absolute;
+            cursor: default;
+            background-color: white;
+            -webkit-user-select: 'none';
+            -moz-user-select: 'none';
+            -ms-user-select: 'none';
+        }
+        
+        .dropZone {
+            border: dotted lightblue 3px;
+            text-align: center;
+            padding: 35px;
+            margin: 5px;                         
         }
     </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
@@ -42,12 +63,17 @@
     <script src='Other/Vector.js'></script>
     <script src='Other/CircularCheck.js'></script>
     <script src='Other/GenerateTitle.js'></script>
+    <script src='Other/interact.js'></script>
+    <script src='Other/bigint.js'></script>
+    <script src='Other/GraphLib2.js'></script>
+    <script src='Other/OtherOther.js'></script>
 </head>
+
 <body>
-    <canvas id='canvas'>Canvas isn't supported</canvas>    
+    <canvas id='canvas'>Canvas isn't supported</canvas>
     <div id='elements'></div>
     <script>
-    var can = document.getElementById('canvas');
+        var can = document.getElementById('canvas');
     can.width = document.documentElement.clientWidth - 30;
     can.height = document.documentElement.clientHeight - 30;    
     window.addEventListener('resize', function(){
@@ -56,16 +82,98 @@
     });        
     if(typeof(Storage) === "undefined") {
         alert('We can\'t save state of the programm because your browser not support localStorage');
-    }     
-    </script>    
+    }
+    </script>
+
+    <script>
+        //elements resizing script
+        interact('ELDOM')
+            .draggable({
+                onmove: window.dragMoveListener
+            })
+            .resizable({
+                preserveAspectRatio: false,
+                edges: { left: true, right: true, bottom: true, top: true },                                
+            })
+            .on('resizemove', function (event) {                
+                if (event.target.resizable == false) return;                                
+                var target = event.target,
+                    x = (parseFloat(target.getAttribute('data-x')) || 0),
+                    y = (parseFloat(target.getAttribute('data-y')) || 0);
+                
+                for (var c = 0; c < target.childNodes.length; c++){
+                    var node = target.childNodes[c];
+                    if (!node.checkMinSize) continue;                                   
+                    var resE = node.checkMinSize(event.rect.width,event.rect.height);
+                    if (!resE[0]) {
+                        event.rect.width = target.style.width;
+                        event.deltaRect.left = 0;
+                    }
+                    if (!resE[1]) {
+                        event.rect.height = target.style.height;
+                        event.deltaRect.top = 0;
+                    }                 
+                }
+                
+                // update the element's style                
+                target.style.width  = event.rect.width + 'px';
+                target.style.height = event.rect.height  + 'px';
+
+                // translate when resizing from top or left edges
+                var lastX = x;
+                var lastY = y;
+                x += event.deltaRect.left;
+                y += event.deltaRect.top;
+
+                target.style.webkitTransform = target.style.transform =
+                    'translate(' + x + 'px,' + y + 'px)';
+
+                target.setAttribute('data-x', x);
+                target.setAttribute('data-y', y);
+                
+                for (var c = 0; c < target.childNodes.length; c++){
+                    var node = target.childNodes[c];                                                 
+                                              
+                    if (node.resizeEvent) {                                                                        
+                        node.resizeEvent();
+                    }
+                    //else console.log(node,node.resizable)
+                }                   
+            });
+            
+        function dragMoveListener(event) {
+            var target = event.target,
+            // keep the dragged position in the data-x/data-y attributes
+            x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
+            y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+            // translate the element
+            target.style.webkitTransform =
+            target.style.transform =
+            'translate(' + x + 'px, ' + y + 'px)';
+
+            // update the posiion attributes
+            target.setAttribute('data-x', x);
+            target.setAttribute('data-y', y);
+            
+            target.pos = new Pos(target.startPos.x+x,target.startPos.y+y);
+        }
+
+        // this is used later in the resizing and gesture demos
+        window.dragMoveListener = dragMoveListener;
+    </script>
     <!--   
     <script src='Modules/Actions/Math.js'></script>    -->
     <script src='Modules/Action.js'></script>
+    <script src='Modules/Worker.js'></script>
     <script src='Modules/Sum.js'></script>
     <script src='Modules/Data.js'></script>
-    <script src='Classes/DOM.js'></script>
+    <script src='Modules/Graphic.js'></script>
+    <script src='Modules/DataList.js'></script>
+    <script src='Modules/Container.js'></script>
     <script src='Classes/Presenter.js'></script>
     <script src='Classes/Module.js'></script>
     <script src='main.js'></script>
 </body>
+
 </html>
